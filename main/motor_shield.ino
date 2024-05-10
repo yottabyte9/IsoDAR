@@ -15,36 +15,36 @@ void MotorStrainMove(DualG2HighPowerMotorShield18v22 &md, double strain){
 bool MotorTiltMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double strain){
   double nstrain = MotorStrainCalculate(strain);
   if(nstrain > 0){
-    if(ytilt>0.5){
-      md.setM2Speed(300);
-      md.setM1Speed(100);
+    if(ytilt>0.2){
+      md.setM1Speed(300);
+      md.setM2Speed(100);      
       Serial.print("M1 Speed: ");
-      Serial.println(100);
-      Serial.print("M2 Speed: ");
       Serial.println(300);
+      Serial.print("M2 Speed: ");
+      Serial.println(100);
       return true;
     }
-    else if(ytilt<-0.5){
-      md.setM1Speed(300);
-      md.setM2Speed(100);
+    else if(ytilt<-0.2){
+      md.setM1Speed(100);
+      md.setM2Speed(300);
       Serial.print("M1 Speed: ");
-      Serial.println(300);
-      Serial.print("M2 Speed: ");
       Serial.println(100);
+      Serial.print("M2 Speed: ");
+      Serial.println(300);
       return true;
     }
   }
   else{
-    if(ytilt>0.5){
-      md.setM2Speed(-300);
+    if(ytilt>0.2){
       md.setM1Speed(-100);
+      md.setM2Speed(-300);
       Serial.print("M1 Speed: ");
       Serial.println(-100);
       Serial.print("M2 Speed: ");
       Serial.println(-300);
       return true;
     }
-    else if(ytilt<-0.5){
+    else if(ytilt<-0.2){
       md.setM1Speed(-300);
       md.setM2Speed(-100);
       Serial.print("M1 Speed: ");
@@ -68,14 +68,20 @@ double MotorStrainCalculate(double strain){
 }
 
 void StopIfFault(DualG2HighPowerMotorShield18v22 &md, int keeprun){
-  if (md.getM1Fault() || keeprun == 0)
+  if(keeprun == 0){
+    md.disableDrivers();
+  delay(1);
+    Serial.println("Manual user termination");
+    while (1);
+  }
+  if (md.getM1Fault())
   {
     md.disableDrivers();
   delay(1);
     Serial.println("M1 fault");
     while (1);
   }
-  if (md.getM2Fault() || keeprun == 0)
+  if (md.getM2Fault())
   {
     md.disableDrivers();
   delay(1);
