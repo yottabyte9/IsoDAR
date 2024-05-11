@@ -58,13 +58,37 @@ bool MotorTiltMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double str
   return false;
 }
 
+/*
+ * -200k (400)
+ * -125k -> -75k (0)
+ * 0 (-400)
+ */
 double MotorStrainCalculate(double strain){
-  if(strain < -50000){ //push up
-    return 200;
+  double max_threshold = -200000; 
+  double min_threshold = 0
+  double target_pressure = -100000; 
+  double tolerance = 25000;
+
+  if (strain <= max_threshold) {
+    return 399;
   }
-  else{
-    return -200;
+  else if (strain >= min_threshold) { 
+    return -399;
   }
+  else if (strain > max_threshold && strain < target_pressure - tolerance) { // (-200k to -125k)
+    double range = abs(max_threshold - (target_pressure - tolerance)); //75k range
+    double fraction = abs(strain - (target_pressure - tolerance)) / range; //distance from -125k / range
+    return 399 * fraction;
+  }
+  else if (strain >= target_pressure - tolerance && strain <= target_pressure + tolerance) {
+    return 0;
+  }
+  else if (strain > target_pressure + tolerance && strain < min_threshold) { // (-75k to 0)
+    double range = abs(min_threshold - (target_pressure + tolerance)); // 75k range
+    double fraction = abs(strain - (target_pressure + tolerance)) / range; // distance from -75k / range
+    return -399 * fraction;
+  }
+  return 0;
 }
 
 void StopIfFault(DualG2HighPowerMotorShield18v22 &md, int keeprun){
