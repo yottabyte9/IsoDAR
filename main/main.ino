@@ -58,7 +58,8 @@ void loop() {
   if(!MotorTiltMove(md, MPUValues.accelY, NAUValuesAdjusted)){
     MotorStrainMove(md, NAUValuesAdjusted);
   }
-
+  
+  //MotorSetLevel(md, MPUValues.accelY);
   delay(100);
   
   //md.setM2Speed(300);
