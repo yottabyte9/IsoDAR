@@ -17,8 +17,7 @@ MPUSensorValues MPUReadValues(Adafruit_MPU6050 &mpu) {
     vals.gyroX = g.gyro.x;
     vals.gyroY = g.gyro.y;
     vals.gyroZ = g.gyro.z;
-
-    delay(100);
+    
     return vals;
 }
 
