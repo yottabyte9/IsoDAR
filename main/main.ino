@@ -8,7 +8,7 @@
 
 Adafruit_MPU6050 mpu; //6 direction tilt sensor
 Adafruit_NAU7802 nau; //strain sensor, negative values = resistance
-DualG2HighPowerMotorShield18v22 md; //motors (-400 to 400)
+DualG2HighPowerMotorShield18v22 md; //motors (-400 to 400) positive is up
 
 //Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
 
@@ -53,7 +53,14 @@ void loop() {
       keeprun = Serial.parseInt();
   }
   StopIfFault(md, keeprun);
+
+  
   if(!MotorTiltMove(md, MPUValues.accelY, NAUValuesAdjusted)){
     MotorStrainMove(md, NAUValuesAdjusted);
   }
+
+  delay(100);
+  
+  //md.setM2Speed(300);
+  //md.setM1Speed(100);
 }
