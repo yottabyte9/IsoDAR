@@ -14,9 +14,12 @@ void MotorStrainMove(DualG2HighPowerMotorShield18v22 &md, double strain) {
 
 void MotorSetLevel(DualG2HighPowerMotorShield18v22 &md, double ytilt){
   double tolerance = 0.1;
-  double max_tilt = 0.5; //error catching
-  double speed = 1;
-  while( abs(ytilt) > tolerance && abs(ytilt) < max_tilt){
+  double max_tilt = 1.6; //error catching
+  double speed = 50;
+  if(abs(ytilt) < tolerance){
+    return;
+  }
+  if( abs(ytilt) > tolerance && abs(ytilt) < max_tilt){
     if(ytilt > 0){
       md.setM1Speed(speed);
       md.setM2Speed(-1*speed);
@@ -35,7 +38,7 @@ void MotorSetLevel(DualG2HighPowerMotorShield18v22 &md, double ytilt){
 
 bool MotorTiltMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double strain) {
   double nstrain = MotorStrainCalculate(strain);
-  double tolerance = 0.1;
+  double tolerance = 0.2;
   double max_tilt = 0.5;
 
   if (abs(ytilt) > max_tilt) {
