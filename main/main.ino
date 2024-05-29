@@ -6,9 +6,17 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH110X.h>
 
+// Define I2C addresses
+#define SSD1306_ADDRESS 0x2A
+#define MPU6050_ADDRESS 0x68
+
+
 Adafruit_MPU6050 mpu; //6 direction tilt sensor
 Adafruit_NAU7802 nau; //strain sensor, negative values = resistance
-DualG2HighPowerMotorShield18v22 md; //motors (-400 to 400) positive is up
+DualG2HighPowerMotorShield18v22 md; //motors (-400 to 400)
+
+bool i2cFaultDetected = false; // Flag to track I2C faults
+
 
 //Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
 
@@ -20,7 +28,9 @@ struct MPUSensorValues { //struct for tilt sensor (6 values)
 double strain; //initial strain
 int keeprun = 1;
 
+
 void setup() {
+
   Serial.begin(115200);
   delay(1000);
 
@@ -40,11 +50,23 @@ void setup() {
   strain = nau.read(); //read in initial strain after 1 second (first second gives random values)
   
   MotorSetup(md);
-    
+
+  // Initialize I2C devices
+  Wire.beginTransmission(0x2A);
+  if (Wire.endTransmission() != 0) {
+    Serial.println(F("Failed to find device at 0x2A"));
+  }
+
+  Wire.beginTransmission(0x68);
+  if (Wire.endTransmission() != 0) {
+    Serial.println(F("Failed to find device at 0x68"));
+  }
+
 }
 
 
 void loop() {
+  
   MPUSensorValues MPUValues = MPUReadValues(mpu);
   MPUPrintValues(MPUValues);
   double NAUValues = NAUSensorValueBase(nau);
@@ -53,15 +75,37 @@ void loop() {
       keeprun = Serial.parseInt();
   }
   StopIfFault(md, keeprun);
-
   
   if(!MotorTiltMove(md, MPUValues.accelY, NAUValuesAdjusted)){
     MotorStrainMove(md, NAUValuesAdjusted);
   }
   
-  //MotorSetLevel(md, MPUValues.accelY);
-  delay(100);
+
+  // Check for I2C errors for both devices
+  Wire.beginTransmission(SSD1306_ADDRESS);
+  byte error1 = Wire.endTransmission();
+  if (error1) {
+    i2cFaultDetected = true;
+    Serial.print(F("I2C error with SSD1306: "));
+    Serial.println(error1);
+  }
+
+  Wire.beginTransmission(MPU6050_ADDRESS);
+  byte error2 = Wire.endTransmission();
+  if (error2) {
+    i2cFaultDetected = true;
+    Serial.print(F("I2C error with MPU6050: "));
+    Serial.println(error2);
+  }
+  if (i2cFaultDetected) {
+    Serial.println(F("I2C fault detected!"));
+  }
+
+
+
+  //md.setM1Speed(300.0);
+  //md.setM2Speed(300.0);
   
-  //md.setM2Speed(300);
-  //md.setM1Speed(100);
+  delay(100);
+
 }
