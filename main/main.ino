@@ -20,6 +20,11 @@ bool i2cFaultDetected = false; // Flag to track I2C faults
 
 //Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
 
+struct MotorValues{ //struct for previous iteration motor speeds
+  double M1Speed;
+  double M2Speed;
+};
+
 struct MPUSensorValues { //struct for tilt sensor (6 values)
     double accelX, accelY, accelZ;
     double gyroX, gyroY, gyroZ;
@@ -27,6 +32,8 @@ struct MPUSensorValues { //struct for tilt sensor (6 values)
 
 double strain; //initial strain
 int keeprun = 1;
+
+MotorValues mvals;
 
 
 void setup() {
@@ -61,8 +68,10 @@ void setup() {
   if (Wire.endTransmission() != 0) {
     Serial.println(F("Failed to find device at 0x68"));
   }
-
+  mvals.M1Speed = 0;
+  mvals.M2Speed = 0;
 }
+
 
 
 void loop() {
@@ -76,10 +85,9 @@ void loop() {
   }
   StopIfFault(md, keeprun);
   
-  if(!MotorTiltMove(md, MPUValues.accelY, NAUValuesAdjusted)){
-    MotorStrainMove(md, NAUValuesAdjusted);
-  }
-  
+  mvals = MotorMove(md, MPUValues.accelY, NAUValuesAdjusted, mvals);
+  //md.setM1Speed(200);
+  //md.setM2Speed(200);
 
   // Check for I2C errors for both devices
   Wire.beginTransmission(SSD1306_ADDRESS);
@@ -102,10 +110,6 @@ void loop() {
   }
 
 
-
-  //md.setM1Speed(300.0);
-  //md.setM2Speed(300.0);
-  
-  delay(100);
+  delay(1);
 
 }
