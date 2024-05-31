@@ -1,20 +1,11 @@
-void MotorSetup(DualG2HighPowerMotorShield18v22 &md) {
+void MotorSetup(DualG2HighPowerMotorShield18v22 &md){
   md.init();
   md.calibrateCurrentOffsets();
 }
 
-void MotorStrainMove(DualG2HighPowerMotorShield18v22 &md, double strain) {
-  md.setM1Speed(MotorStrainCalculate(strain));
-  md.setM2Speed(MotorStrainCalculate(strain));
-  Serial.print("M1 Speed: ");
-  Serial.println(MotorStrainCalculate(strain));
-  Serial.print("M2 Speed: ");
-  Serial.println(MotorStrainCalculate(strain));
-}
-
 void MotorSetLevel(DualG2HighPowerMotorShield18v22 &md, double ytilt){
   double tolerance = 0.1;
-  double max_tilt = 1.6; //error catching
+  double max_tilt = 2.6; //error catching
   double speed = 50;
   if(abs(ytilt) < tolerance){
     return;
@@ -31,15 +22,11 @@ void MotorSetLevel(DualG2HighPowerMotorShield18v22 &md, double ytilt){
   }
 }
 
-/*
-   IF STRAIN RETURNS 0, AKA WE NOT MOVING,
-   IT WILL REMAIN TILTED. IS THIS INTENDED?
-*/
-
-bool MotorTiltMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double strain) {
+MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double strain, MotorValues mvals){
+  MotorValues newvals;
   double nstrain = MotorStrainCalculate(strain);
   double tolerance = 0.2;
-  double max_tilt = 0.5;
+  double max_tilt = 2.5;
 
   if (abs(ytilt) > max_tilt) {
     Serial.println("over max tilt terminate all motors");
@@ -48,49 +35,132 @@ bool MotorTiltMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double str
   }
 
   double range = max_tilt - tolerance;
-  double fraction = (abs(ytilt) - tolerance) / range;
+  double fraction = abs(abs(ytilt) - tolerance) / range;
+
 
   if (nstrain > 0) {
     if (ytilt > tolerance) {
-      md.setM1Speed( (1 + fraction)*nstrain );
-      md.setM2Speed( (fraction)*nstrain );
+      Serial.println("CASE 1");
+      double M1target = (1+fraction)*nstrain;
+      double M2target = fraction*nstrain;
+      if(M1target > mvals.M1Speed){
+        newvals.M1Speed = mvals.M1Speed+10;
+      }
+      if(M1target < mvals.M1Speed){
+        newvals.M1Speed = mvals.M1Speed-10;
+      }
+      if(M2target > mvals.M2Speed){
+        newvals.M2Speed = mvals.M2Speed+10;
+      }
+      if(M2target < mvals.M2Speed){
+        newvals.M2Speed = mvals.M2Speed-10;
+      }
+      md.setM1Speed( newvals.M1Speed );
+      md.setM2Speed( newvals.M2Speed );
       Serial.print("M1 Speed: ");
-      Serial.println((1 + fraction)*nstrain);
+      Serial.println(newvals.M1Speed);
       Serial.print("M2 Speed: ");
-      Serial.println((fraction)*nstrain);
-      return true;
+      Serial.println(newvals.M2Speed);
+      return newvals;
     }
     else if (ytilt < -1 * tolerance) {
-      md.setM1Speed( (fraction)*nstrain );
-      md.setM2Speed( (1 + fraction)*nstrain );
+      Serial.println("CASE 2");
+      double M1target = fraction*nstrain;
+      double M2target = (1+fraction)*nstrain;
+      if(M1target > mvals.M1Speed){
+        newvals.M1Speed = mvals.M1Speed+10;
+      }
+      if(M1target < mvals.M1Speed){
+        newvals.M1Speed = mvals.M1Speed-10;
+      }
+      if(M2target > mvals.M2Speed){
+        newvals.M2Speed = mvals.M2Speed+10;
+      }
+      if(M2target < mvals.M2Speed){
+        newvals.M2Speed = mvals.M2Speed-10;
+      }
+      md.setM1Speed( newvals.M1Speed );
+      md.setM2Speed( newvals.M2Speed );
       Serial.print("M1 Speed: ");
-      Serial.println((fraction)*nstrain);
+      Serial.println(newvals.M1Speed);
       Serial.print("M2 Speed: ");
-      Serial.println((1 + fraction)*nstrain);
-      return true;
+      Serial.println(newvals.M2Speed);
+      return newvals;
     }
   }
   else {
     if (ytilt > tolerance) {
-      md.setM1Speed( (fraction)*nstrain );
-      md.setM2Speed( (1 + fraction)*nstrain );
+      Serial.println("CASE 3");
+      double M1target = fraction*nstrain;
+      double M2target = (1+fraction)*nstrain;
+      if(M1target > mvals.M1Speed){
+        newvals.M1Speed = mvals.M1Speed+10;
+      }
+      if(M1target < mvals.M1Speed){
+        newvals.M1Speed = mvals.M1Speed-10;
+      }
+      if(M2target > mvals.M2Speed){
+        newvals.M2Speed = mvals.M2Speed+10;
+      }
+      if(M2target < mvals.M2Speed){
+        newvals.M2Speed = mvals.M2Speed-10;
+      }
+      md.setM1Speed( newvals.M1Speed );
+      md.setM2Speed( newvals.M2Speed );
       Serial.print("M1 Speed: ");
-      Serial.println((fraction)*nstrain);
+      Serial.println(newvals.M1Speed);
       Serial.print("M2 Speed: ");
-      Serial.println((1 + fraction)*nstrain);
-      return true;
+      Serial.println(newvals.M2Speed);
+      return newvals;
     }
     else if (ytilt < -1 * tolerance) {
-      md.setM1Speed( (1 + fraction)*nstrain );
-      md.setM2Speed( (fraction)*nstrain );
+      Serial.println("CASE 4");
+      double M1target = (1+fraction)*nstrain;
+      double M2target = fraction*nstrain;
+      if(M1target > mvals.M1Speed){
+        newvals.M1Speed = mvals.M1Speed+10;
+      }
+      if(M1target < mvals.M1Speed){
+        newvals.M1Speed = mvals.M1Speed-10;
+      }
+      if(M2target > mvals.M2Speed){
+        newvals.M2Speed = mvals.M2Speed+10;
+      }
+      if(M2target < mvals.M2Speed){
+        newvals.M2Speed = mvals.M2Speed-10;
+      }
+      md.setM1Speed( newvals.M1Speed );
+      md.setM2Speed( newvals.M2Speed );
       Serial.print("M1 Speed: ");
-      Serial.println((1 + fraction)*nstrain);
+      Serial.println(newvals.M1Speed);
       Serial.print("M2 Speed: ");
-      Serial.println((fraction)*nstrain);
-      return true;
+      Serial.println(newvals.M2Speed);
+      return newvals;
     }
   }
-  return false;
+
+  //no tilt
+  double M1target = nstrain;
+  double M2target = nstrain;
+  if(M1target > mvals.M1Speed){
+    newvals.M1Speed = mvals.M1Speed+10;
+  }
+  if(M1target < mvals.M1Speed){
+    newvals.M1Speed = mvals.M1Speed-10;
+  }
+  if(M2target > mvals.M2Speed){
+    newvals.M2Speed = mvals.M2Speed+10;
+  }
+  if(M2target < mvals.M2Speed){
+    newvals.M2Speed = mvals.M2Speed-10;
+  }
+  md.setM1Speed( newvals.M1Speed );
+  md.setM2Speed( newvals.M2Speed );
+  Serial.print("M1 Speed: ");
+  Serial.println(newvals.M1Speed);
+  Serial.print("M2 Speed: ");
+  Serial.println(newvals.M2Speed);
+  return newvals;
 }
 
 /*
@@ -126,25 +196,25 @@ double MotorStrainCalculate(double strain) {
   return 0;
 }
 
-void StopIfFault(DualG2HighPowerMotorShield18v22 &md, int keeprun) {
-  if (keeprun == 0) {
+void StopIfFault(DualG2HighPowerMotorShield18v22 &md, int keeprun){
+  if(keeprun == 0){
     md.disableDrivers();
     delay(1);
     Serial.println("Manual user termination");
-    while (1);
+    //while (1);
   }
   if (md.getM1Fault())
   {
     md.disableDrivers();
     delay(1);
     Serial.println("M1 fault");
-    while (1);
+    //while (1);
   }
   if (md.getM2Fault())
   {
     md.disableDrivers();
     delay(1);
     Serial.println("M2 fault");
-    while (1);
+    //while (1);
   }
 }
