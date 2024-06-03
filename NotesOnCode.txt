@@ -1,8 +1,0 @@
-Verified 2023-12-05
-
-TestingStrainThing7-10    
-	Moves motors up or down in response to strain gauge 
-
-ProportionalControlForTiltSpeed7_18
-	Moves M1 or M2 based on angle of tilt sensor
-	Only moves up, never down.
