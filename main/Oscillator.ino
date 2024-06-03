@@ -45,15 +45,59 @@ void loop()
     Serial.println("Manual user termination");
     while (1);
   }
-  md.setM2Speed(-100);
-  /*
+  //md.setM2Speed(-100);
+  
   md.setM2Speed(50);
-  delay(30000); //30s
+  for(int i=0; i<30000; i++){
+    while (Serial.available() > 0) {
+      keeprun = Serial.parseInt();
+    }
+    if(keeprun == 0){
+      md.disableDrivers();
+      delay(1);
+      Serial.println("Manual user termination");
+      while (1);
+    }
+    delay(1);
+  }
   md.setM2Speed(0);
-  delay(30000); //30s
+  for(int i=0; i<30000; i++){
+    while (Serial.available() > 0) {
+      keeprun = Serial.parseInt();
+    }
+    if(keeprun == 0){
+      md.disableDrivers();
+      delay(1);
+      Serial.println("Manual user termination");
+      while (1);
+    }
+    delay(1);
+  }
   md.setM2Speed(-50);
-  delay(30000); //30s
+  for(int i=0; i<30000; i++){
+    while (Serial.available() > 0) {
+      keeprun = Serial.parseInt();
+    }
+    if(keeprun == 0){
+      md.disableDrivers();
+      delay(1);
+      Serial.println("Manual user termination");
+      while (1);
+    }
+    delay(1);
+  }
   md.setM2Speed(0);
-  delay(120000); //2mins
-  */
+  for(int i=0; i<120000; i++){
+    while (Serial.available() > 0) {
+      keeprun = Serial.parseInt();
+    }
+    if(keeprun == 0){
+      md.disableDrivers();
+      delay(1);
+      Serial.println("Manual user termination");
+      while (1);
+    }
+    delay(1);
+  }
+  
 }
