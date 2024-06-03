@@ -46,6 +46,7 @@ void setup() {
   } else {
       Serial.println("MPU6050 Found!");
   }
+  mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
 
   if(NAUSetup(nau)){
     Serial.println("Failed to find NAU7802");
@@ -86,6 +87,7 @@ void loop() {
   StopIfFault(md, keeprun);
   
   mvals = MotorMove(md, MPUValues.accelY, NAUValuesAdjusted, mvals);
+  //MotorSetLevel(md, MPUValues.accelY);
   //md.setM1Speed(200);
   //md.setM2Speed(200);
 
