@@ -31,7 +31,7 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
   if (abs(ytilt) > max_tilt) {
     Serial.println("over max tilt terminate all motors");
     md.disableDrivers();
-    while (1);
+    //while (1);
   }
 
   double range = max_tilt - tolerance;
@@ -44,16 +44,16 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
       double M1target = (1+fraction)*nstrain;
       double M2target = fraction*nstrain;
       if(M1target > mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed+10;
+        newvals.M1Speed = mvals.M1Speed+5;
       }
       if(M1target < mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed-10;
+        newvals.M1Speed = mvals.M1Speed-5;
       }
       if(M2target > mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed+10;
+        newvals.M2Speed = mvals.M2Speed+5;
       }
       if(M2target < mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed-10;
+        newvals.M2Speed = mvals.M2Speed-5;
       }
       md.setM1Speed( newvals.M1Speed );
       md.setM2Speed( newvals.M2Speed );
@@ -68,16 +68,16 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
       double M1target = fraction*nstrain;
       double M2target = (1+fraction)*nstrain;
       if(M1target > mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed+10;
+        newvals.M1Speed = mvals.M1Speed+5;
       }
       if(M1target < mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed-10;
+        newvals.M1Speed = mvals.M1Speed-5;
       }
       if(M2target > mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed+10;
+        newvals.M2Speed = mvals.M2Speed+5;
       }
       if(M2target < mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed-10;
+        newvals.M2Speed = mvals.M2Speed-5;
       }
       md.setM1Speed( newvals.M1Speed );
       md.setM2Speed( newvals.M2Speed );
@@ -94,16 +94,16 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
       double M1target = fraction*nstrain;
       double M2target = (1+fraction)*nstrain;
       if(M1target > mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed+10;
+        newvals.M1Speed = mvals.M1Speed+5;
       }
       if(M1target < mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed-10;
+        newvals.M1Speed = mvals.M1Speed-5;
       }
       if(M2target > mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed+10;
+        newvals.M2Speed = mvals.M2Speed+5;
       }
       if(M2target < mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed-10;
+        newvals.M2Speed = mvals.M2Speed-5;
       }
       md.setM1Speed( newvals.M1Speed );
       md.setM2Speed( newvals.M2Speed );
@@ -118,16 +118,16 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
       double M1target = (1+fraction)*nstrain;
       double M2target = fraction*nstrain;
       if(M1target > mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed+10;
+        newvals.M1Speed = mvals.M1Speed+5;
       }
       if(M1target < mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed-10;
+        newvals.M1Speed = mvals.M1Speed-5;
       }
       if(M2target > mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed+10;
+        newvals.M2Speed = mvals.M2Speed+5;
       }
       if(M2target < mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed-10;
+        newvals.M2Speed = mvals.M2Speed-5;
       }
       md.setM1Speed( newvals.M1Speed );
       md.setM2Speed( newvals.M2Speed );
@@ -143,23 +143,23 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
   double M1target = nstrain;
   double M2target = nstrain;
   if(M1target > mvals.M1Speed){
-    newvals.M1Speed = mvals.M1Speed+10;
+    newvals.M1Speed = mvals.M1Speed+5;
   }
   if(M1target < mvals.M1Speed){
-    newvals.M1Speed = mvals.M1Speed-10;
+    newvals.M1Speed = mvals.M1Speed-5;
   }
   if(M2target > mvals.M2Speed){
-    newvals.M2Speed = mvals.M2Speed+10;
+    newvals.M2Speed = mvals.M2Speed+5;
   }
   if(M2target < mvals.M2Speed){
-    newvals.M2Speed = mvals.M2Speed-10;
+    newvals.M2Speed = mvals.M2Speed-5;
   }
   md.setM1Speed( newvals.M1Speed );
   md.setM2Speed( newvals.M2Speed );
-  Serial.print("M1 Speed: ");
-  Serial.println(newvals.M1Speed);
-  Serial.print("M2 Speed: ");
-  Serial.println(newvals.M2Speed);
+  //Serial.print("M1 Speed: ");
+  //Serial.println(newvals.M1Speed);
+  //Serial.print("M2 Speed: ");
+  //Serial.println(newvals.M2Speed);
   return newvals;
 }
 
@@ -169,21 +169,21 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
    0 (-400)
 */
 double MotorStrainCalculate(double strain) {
-  double max_threshold = -200000;
+  double max_threshold = -30000;
   double min_threshold = 0;
-  double target_pressure = -100000;
-  double tolerance = 25000;
+  double target_pressure = -20000;
+  double tolerance = 7500;
 
   if (strain <= max_threshold) {
-    return 399;
+    return 299;
   }
   else if (strain >= min_threshold) {
-    return -399;
+    return -299;
   }
   else if (strain > max_threshold && strain < target_pressure - tolerance) { // (-200k to -125k)
     double range = abs(max_threshold - (target_pressure - tolerance)); //75k range
     double fraction = abs(strain - (target_pressure - tolerance)) / range; //distance from -125k / range
-    return 399 * fraction;
+    return 299 * fraction;
   }
   else if (strain >= target_pressure - tolerance && strain <= target_pressure + tolerance) {
     return 0;
@@ -191,7 +191,7 @@ double MotorStrainCalculate(double strain) {
   else if (strain > target_pressure + tolerance && strain < min_threshold) { // (-75k to 0)
     double range = abs(min_threshold - (target_pressure + tolerance)); // 75k range
     double fraction = abs(strain - (target_pressure + tolerance)) / range; // distance from -75k / range
-    return -399 * fraction;
+    return -299 * fraction;
   }
   return 0;
 }
@@ -201,20 +201,20 @@ void StopIfFault(DualG2HighPowerMotorShield18v22 &md, int keeprun){
     md.disableDrivers();
     delay(1);
     Serial.println("Manual user termination");
-    //while (1);
+    while (1);
   }
   if (md.getM1Fault())
   {
     md.disableDrivers();
     delay(1);
-    Serial.println("M1 fault");
+    //Serial.println("M1 fault");
     //while (1);
   }
   if (md.getM2Fault())
   {
     md.disableDrivers();
     delay(1);
-    Serial.println("M2 fault");
+    //Serial.println("M2 fault");
     //while (1);
   }
 }
