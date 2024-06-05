@@ -46,9 +46,9 @@ void loop()
     while (1);
   }
   //md.setM2Speed(-100);
-  
-  md.setM2Speed(50);
-  for(int i=0; i<30000; i++){
+  //delay(100000);
+  md.setM2Speed(100);
+  for(int i=0; i<10000; i++){
     while (Serial.available() > 0) {
       keeprun = Serial.parseInt();
     }
@@ -61,7 +61,7 @@ void loop()
     delay(1);
   }
   md.setM2Speed(0);
-  for(int i=0; i<30000; i++){
+  for(int i=0; i<10000; i++){
     while (Serial.available() > 0) {
       keeprun = Serial.parseInt();
     }
@@ -73,8 +73,8 @@ void loop()
     }
     delay(1);
   }
-  md.setM2Speed(-50);
-  for(int i=0; i<30000; i++){
+  md.setM2Speed(-105);
+  for(int i=0; i<10000; i++){
     while (Serial.available() > 0) {
       keeprun = Serial.parseInt();
     }
@@ -87,7 +87,7 @@ void loop()
     delay(1);
   }
   md.setM2Speed(0);
-  for(int i=0; i<120000; i++){
+  for(int i=0; i<10000; i++){
     while (Serial.available() > 0) {
       keeprun = Serial.parseInt();
     }
