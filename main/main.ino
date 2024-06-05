@@ -112,6 +112,6 @@ void loop() {
   }
 
 
-  delay(1);
+  delay(5);
 
 }
