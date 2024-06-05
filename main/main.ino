@@ -71,6 +71,8 @@ void setup() {
   }
   mvals.M1Speed = 0;
   mvals.M2Speed = 0;
+
+  
 }
 
 
@@ -110,8 +112,14 @@ void loop() {
   if (i2cFaultDetected) {
     Serial.println(F("I2C fault detected!"));
   }
-
-
+  /*
+  if(md.getM1CurrentMilliamps() > 8000){
+    Serial.println("M1 Current over 8A");
+  }
+  if(md.getM2CurrentMilliamps() > 8000){
+    Serial.println("M2 Current over 8A");
+  }
+  */
   delay(5);
 
 }
