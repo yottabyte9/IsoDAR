@@ -44,16 +44,16 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
       double M1target = (1+fraction)*nstrain;
       double M2target = fraction*nstrain;
       if(M1target > mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed+10;
+        newvals.M1Speed = mvals.M1Speed+5;
       }
       if(M1target < mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed-10;
+        newvals.M1Speed = mvals.M1Speed-5;
       }
       if(M2target > mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed+10;
+        newvals.M2Speed = mvals.M2Speed+5;
       }
       if(M2target < mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed-10;
+        newvals.M2Speed = mvals.M2Speed-5;
       }
       md.setM1Speed( newvals.M1Speed );
       md.setM2Speed( newvals.M2Speed );
@@ -68,16 +68,16 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
       double M1target = fraction*nstrain;
       double M2target = (1+fraction)*nstrain;
       if(M1target > mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed+10;
+        newvals.M1Speed = mvals.M1Speed+5;
       }
       if(M1target < mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed-10;
+        newvals.M1Speed = mvals.M1Speed-5;
       }
       if(M2target > mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed+10;
+        newvals.M2Speed = mvals.M2Speed+5;
       }
       if(M2target < mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed-10;
+        newvals.M2Speed = mvals.M2Speed-5;
       }
       md.setM1Speed( newvals.M1Speed );
       md.setM2Speed( newvals.M2Speed );
@@ -94,16 +94,16 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
       double M1target = fraction*nstrain;
       double M2target = (1+fraction)*nstrain;
       if(M1target > mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed+10;
+        newvals.M1Speed = mvals.M1Speed+5;
       }
       if(M1target < mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed-10;
+        newvals.M1Speed = mvals.M1Speed-5;
       }
       if(M2target > mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed+10;
+        newvals.M2Speed = mvals.M2Speed+5;
       }
       if(M2target < mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed-10;
+        newvals.M2Speed = mvals.M2Speed-5;
       }
       md.setM1Speed( newvals.M1Speed );
       md.setM2Speed( newvals.M2Speed );
@@ -118,16 +118,16 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
       double M1target = (1+fraction)*nstrain;
       double M2target = fraction*nstrain;
       if(M1target > mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed+10;
+        newvals.M1Speed = mvals.M1Speed+5;
       }
       if(M1target < mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed-10;
+        newvals.M1Speed = mvals.M1Speed-5;
       }
       if(M2target > mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed+10;
+        newvals.M2Speed = mvals.M2Speed+5;
       }
       if(M2target < mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed-10;
+        newvals.M2Speed = mvals.M2Speed-5;
       }
       md.setM1Speed( newvals.M1Speed );
       md.setM2Speed( newvals.M2Speed );
@@ -143,16 +143,16 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
   double M1target = nstrain;
   double M2target = nstrain;
   if(M1target > mvals.M1Speed){
-    newvals.M1Speed = mvals.M1Speed+10;
+    newvals.M1Speed = mvals.M1Speed+5;
   }
   if(M1target < mvals.M1Speed){
-    newvals.M1Speed = mvals.M1Speed-10;
+    newvals.M1Speed = mvals.M1Speed-5;
   }
   if(M2target > mvals.M2Speed){
-    newvals.M2Speed = mvals.M2Speed+10;
+    newvals.M2Speed = mvals.M2Speed+5;
   }
   if(M2target < mvals.M2Speed){
-    newvals.M2Speed = mvals.M2Speed-10;
+    newvals.M2Speed = mvals.M2Speed-5;
   }
   md.setM1Speed( newvals.M1Speed );
   md.setM2Speed( newvals.M2Speed );
@@ -169,21 +169,21 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
    0 (-400)
 */
 double MotorStrainCalculate(double strain) {
-  double max_threshold = -200000;
+  double max_threshold = -30000;
   double min_threshold = 0;
-  double target_pressure = -100000;
-  double tolerance = 25000;
+  double target_pressure = -20000;
+  double tolerance = 7500;
 
   if (strain <= max_threshold) {
-    return 399;
+    return 299;
   }
   else if (strain >= min_threshold) {
-    return -399;
+    return -299;
   }
   else if (strain > max_threshold && strain < target_pressure - tolerance) { // (-200k to -125k)
     double range = abs(max_threshold - (target_pressure - tolerance)); //75k range
     double fraction = abs(strain - (target_pressure - tolerance)) / range; //distance from -125k / range
-    return 399 * fraction;
+    return 299 * fraction;
   }
   else if (strain >= target_pressure - tolerance && strain <= target_pressure + tolerance) {
     return 0;
@@ -191,7 +191,7 @@ double MotorStrainCalculate(double strain) {
   else if (strain > target_pressure + tolerance && strain < min_threshold) { // (-75k to 0)
     double range = abs(min_threshold - (target_pressure + tolerance)); // 75k range
     double fraction = abs(strain - (target_pressure + tolerance)) / range; // distance from -75k / range
-    return -399 * fraction;
+    return -299 * fraction;
   }
   return 0;
 }
