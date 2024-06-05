@@ -16,7 +16,7 @@ Adafruit_NAU7802 nau; //strain sensor, negative values = resistance
 DualG2HighPowerMotorShield18v22 md; //motors (-400 to 400)
 
 bool i2cFaultDetected = false; // Flag to track I2C faults
-
+double initial_z = 0;
 
 //Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
 
@@ -57,7 +57,12 @@ void setup() {
   delay(1000);
   strain = nau.read(); //read in initial strain after 1 second (first second gives random values)
   
-  MotorSetup(md);
+  MPUSensorValues vals;
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+  initial_z = a.acceleration.z;
+
+  //MotorSetup(md);
 
   // Initialize I2C devices
   Wire.beginTransmission(0x2A);
@@ -71,6 +76,8 @@ void setup() {
   }
   mvals.M1Speed = 0;
   mvals.M2Speed = 0;
+
+  
 }
 
 
@@ -85,7 +92,25 @@ void loop() {
       keeprun = Serial.parseInt();
   }
   StopIfFault(md, keeprun);
-  
+
+  if( abs( abs(MPUValues.accelZ) - abs(initial_z)) > 1){
+    Serial.println("YOU SMACKED IT");
+    Serial.println("YOU SMACKED IT");
+    Serial.println("YOU SMACKED IT");
+    Serial.println("YOU SMACKED IT");
+    Serial.println("YOU SMACKED IT");
+    Serial.println("YOU SMACKED IT");
+    Serial.println("YOU SMACKED IT");
+    Serial.println("YOU SMACKED IT");
+    Serial.println("YOU SMACKED IT");
+    Serial.println("YOU SMACKED IT");
+    Serial.println("YOU SMACKED IT");
+    Serial.println("YOU SMACKED IT");
+    Serial.println("YOU SMACKED IT");
+    Serial.println("YOU SMACKED IT");
+    Serial.println("YOU SMACKED IT");
+  }
+
   mvals = MotorMove(md, MPUValues.accelY, NAUValuesAdjusted, mvals);
   //MotorSetLevel(md, MPUValues.accelY);
   //md.setM1Speed(200);
@@ -110,8 +135,14 @@ void loop() {
   if (i2cFaultDetected) {
     Serial.println(F("I2C fault detected!"));
   }
-
-
-  delay(1);
+  /*
+  if(md.getM1CurrentMilliamps() > 8000){
+    Serial.println("M1 Current over 8A");
+  }
+  if(md.getM2CurrentMilliamps() > 8000){
+    Serial.println("M2 Current over 8A");
+  }
+  */
+  delay(5);
 
 }
