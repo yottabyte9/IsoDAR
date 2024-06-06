@@ -26,12 +26,13 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
   MotorValues newvals;
   double nstrain = MotorStrainCalculate(strain);
   double tolerance = 0.2;
-  double max_tilt = 2.5;
+  double max_tilt = 2;
 
   if (abs(ytilt) > max_tilt) {
     Serial.println("over max tilt terminate all motors");
     md.disableDrivers();
-    while (1);
+    delay(1000);
+    //while (1);
   }
 
   double range = max_tilt - tolerance;
@@ -201,7 +202,7 @@ void StopIfFault(DualG2HighPowerMotorShield18v22 &md, int keeprun){
     md.disableDrivers();
     delay(1);
     Serial.println("Manual user termination");
-    //while (1);
+    while (1);
   }
   if (md.getM1Fault())
   {
