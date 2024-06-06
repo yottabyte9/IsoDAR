@@ -17,7 +17,6 @@ DualG2HighPowerMotorShield18v22 md; //motors (-400 to 400)
 
 bool i2cFaultDetected = false; // Flag to track I2C faults
 
-
 //Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
 
 struct MotorValues{ //struct for previous iteration motor speeds
@@ -32,6 +31,9 @@ struct MPUSensorValues { //struct for tilt sensor (6 values)
 
 double strain; //initial strain
 int keeprun = 1;
+MPUSensorValues initial_tilt;
+MPUSensorValues past_tilt;
+
 
 MotorValues mvals;
 
@@ -57,6 +59,11 @@ void setup() {
   delay(1000);
   strain = nau.read(); //read in initial strain after 1 second (first second gives random values)
   
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+  initial_tilt.accelZ = a.acceleration.z;
+  initial_tilt.accelX = a.acceleration.x;
+
   MotorSetup(md);
 
   // Initialize I2C devices
@@ -78,7 +85,6 @@ void setup() {
 
 
 void loop() {
-  
   MPUSensorValues MPUValues = MPUReadValues(mpu);
   MPUPrintValues(MPUValues);
   double NAUValues = NAUSensorValueBase(nau);
@@ -87,11 +93,36 @@ void loop() {
       keeprun = Serial.parseInt();
   }
   StopIfFault(md, keeprun);
+  bool smacked = false;
+  if( abs( abs(MPUValues.accelZ) - abs(initial_tilt.accelZ)) > 4){
+    for(int i=0; i<5; i++){
+      Serial.println("YOU SMACKED IT");
+    }
+    smacked = true;
+  }
+
+  if( abs( abs(MPUValues.accelX) - abs(initial_tilt.accelX)) > 4){
+    for(int i=0; i<5; i++){
+      Serial.println("YOU SMACKED IT");
+    }
+    smacked = true;
+  }
+
+  if( abs( abs(MPUValues.accelY) - abs(past_tilt.accelY)) > 0.5){
+    for(int i=0; i<5; i++){
+      Serial.println("YOU SMACKED IT");
+    }
+    smacked = true;
+  }
+
+  if(!smacked){
+    //mvals = MotorMove(md, MPUValues.accelY, NAUValuesAdjusted, mvals);
+    past_tilt = MPUValues;
+  }
   
-  mvals = MotorMove(md, MPUValues.accelY, NAUValuesAdjusted, mvals);
   //MotorSetLevel(md, MPUValues.accelY);
-  //md.setM1Speed(200);
-  //md.setM2Speed(200);
+  md.setM1Speed(-200);
+  md.setM2Speed(-200);
 
   // Check for I2C errors for both devices
   Wire.beginTransmission(SSD1306_ADDRESS);
@@ -112,14 +143,14 @@ void loop() {
   if (i2cFaultDetected) {
     Serial.println(F("I2C fault detected!"));
   }
-  /*
+
   if(md.getM1CurrentMilliamps() > 8000){
     Serial.println("M1 Current over 8A");
   }
   if(md.getM2CurrentMilliamps() > 8000){
     Serial.println("M2 Current over 8A");
   }
-  */
+
   delay(5);
 
 }
