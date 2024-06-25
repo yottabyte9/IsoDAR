@@ -5,3 +5,5 @@ MPU6050 data-sheet - https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6
 MPU6050 library - https://github.com/adafruit/Adafruit_MPU6050/blob/master/Adafruit_MPU6050.cpp
 
 DualG2HighPowerMotorShield library - https://github.com/pololu/dual-g2-high-power-motor-shield/blob/master/DualG2HighPowerMotorShield.cpp
+
+https://docs.google.com/spreadsheets/d/1iXG_-U036u3jl0MuzTEPDbzxgZP-VuRlwGiqfNZMB4Q/edit?gid=0#gid=0
