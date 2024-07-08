@@ -1,28 +1,28 @@
-void MotorSetup(DualG2HighPowerMotorShield18v22 &md){
-  md.init();
-  md.calibrateCurrentOffsets();
+void MotorSetup(){
+  SabertoothTXPinSerial.begin(9600); // 9600 is the default baud rate for Sabertooth packet serial.
+  ST.autobaud(); // Send the autobaud command to the Sabertooth controller(s).
 }
 
-void MotorSetLevel(DualG2HighPowerMotorShield18v22 &md, double ytilt){
+void MotorSetLevel(double ytilt){
   double tolerance = 0.1;
   double max_tilt = 2.6; //error catching
-  double speed = 50;
+  double speed = 25;
   if(abs(ytilt) < tolerance){
     return;
   }
   if( abs(ytilt) > tolerance && abs(ytilt) < max_tilt){
     if(ytilt > 0){
-      md.setM1Speed(speed);
-      md.setM2Speed(-1*speed);
+      ST.motor(1, speed);
+      ST.motor(2, -1*speed);
     }
     else{
-      md.setM1Speed(-1*speed);
-      md.setM2Speed(speed);
+      ST.motor(1, -1*speed);
+      ST.motor(2, speed);
     }
   }
 }
 
-MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double strain, MotorValues mvals){
+MotorValues MotorMove(double ytilt, double strain, MotorValues mvals){
   MotorValues newvals;
   double nstrain = MotorStrainCalculate(strain);
   double tolerance = 0.2;
@@ -30,7 +30,7 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
 
   if (abs(ytilt) > max_tilt) {
     Serial.println("over max tilt terminate all motors");
-    md.disableDrivers();
+    ST.stop();
     delay(1000);
     //while (1);
   }
@@ -56,8 +56,8 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
       if(M2target < mvals.M2Speed){
         newvals.M2Speed = mvals.M2Speed-5;
       }
-      md.setM1Speed( newvals.M1Speed );
-      md.setM2Speed( newvals.M2Speed );
+      ST.motor(1, newvals.M1Speed);
+      ST.motor(2, newvals.M2Speed);
       Serial.print("M1 Speed: ");
       Serial.println(newvals.M1Speed);
       Serial.print("M2 Speed: ");
@@ -80,8 +80,8 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
       if(M2target < mvals.M2Speed){
         newvals.M2Speed = mvals.M2Speed-5;
       }
-      md.setM1Speed( newvals.M1Speed );
-      md.setM2Speed( newvals.M2Speed );
+      ST.motor(1, newvals.M1Speed);
+      ST.motor(2, newvals.M2Speed);
       Serial.print("M1 Speed: ");
       Serial.println(newvals.M1Speed);
       Serial.print("M2 Speed: ");
@@ -106,8 +106,8 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
       if(M2target < mvals.M2Speed){
         newvals.M2Speed = mvals.M2Speed-5;
       }
-      md.setM1Speed( newvals.M1Speed );
-      md.setM2Speed( newvals.M2Speed );
+      ST.motor(1, newvals.M1Speed);
+      ST.motor(2, newvals.M2Speed);
       Serial.print("M1 Speed: ");
       Serial.println(newvals.M1Speed);
       Serial.print("M2 Speed: ");
@@ -130,8 +130,8 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
       if(M2target < mvals.M2Speed){
         newvals.M2Speed = mvals.M2Speed-5;
       }
-      md.setM1Speed( newvals.M1Speed );
-      md.setM2Speed( newvals.M2Speed );
+      ST.motor(1, newvals.M1Speed);
+      ST.motor(2, newvals.M2Speed);
       Serial.print("M1 Speed: ");
       Serial.println(newvals.M1Speed);
       Serial.print("M2 Speed: ");
@@ -155,8 +155,8 @@ MotorValues MotorMove(DualG2HighPowerMotorShield18v22 &md, double ytilt, double 
   if(M2target < mvals.M2Speed){
     newvals.M2Speed = mvals.M2Speed-5;
   }
-  md.setM1Speed( newvals.M1Speed );
-  md.setM2Speed( newvals.M2Speed );
+  ST.motor(1, newvals.M1Speed);
+  ST.motor(2, newvals.M2Speed);
   Serial.print("M1 Speed: ");
   Serial.println(newvals.M1Speed);
   Serial.print("M2 Speed: ");
@@ -176,15 +176,15 @@ double MotorStrainCalculate(double strain) {
   double tolerance = 7500;
 
   if (strain <= max_threshold) {
-    return 299;
+    return 127;
   }
   else if (strain >= min_threshold) {
-    return -299;
+    return -127;
   }
   else if (strain > max_threshold && strain < target_pressure - tolerance) { // (-200k to -125k)
     double range = abs(max_threshold - (target_pressure - tolerance)); //75k range
     double fraction = abs(strain - (target_pressure - tolerance)) / range; //distance from -125k / range
-    return 299 * fraction;
+    return 127 * fraction;
   }
   else if (strain >= target_pressure - tolerance && strain <= target_pressure + tolerance) {
     return 0;
@@ -192,18 +192,19 @@ double MotorStrainCalculate(double strain) {
   else if (strain > target_pressure + tolerance && strain < min_threshold) { // (-75k to 0)
     double range = abs(min_threshold - (target_pressure + tolerance)); // 75k range
     double fraction = abs(strain - (target_pressure + tolerance)) / range; // distance from -75k / range
-    return -299 * fraction;
+    return -127 * fraction;
   }
   return 0;
 }
 
-void StopIfFault(DualG2HighPowerMotorShield18v22 &md, int keeprun){
+void StopIfFault(int keeprun){
   if(keeprun == 0){
-    md.disableDrivers();
+    ST.stop();
     delay(1);
     Serial.println("Manual user termination");
     while (1);
   }
+  /*
   if (md.getM1Fault())
   {
     md.disableDrivers();
@@ -218,4 +219,5 @@ void StopIfFault(DualG2HighPowerMotorShield18v22 &md, int keeprun){
     Serial.println("M2 fault");
     //while (1);
   }
+  */
 }
