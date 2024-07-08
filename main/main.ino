@@ -1,6 +1,6 @@
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_NAU7802.h>
-#include <DualG2HighPowerMotorShield.h>
+#include <Sabertooth.h>
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -13,7 +13,7 @@
 
 Adafruit_MPU6050 mpu; //6 direction tilt sensor
 Adafruit_NAU7802 nau; //strain sensor, negative values = resistance
-DualG2HighPowerMotorShield18v22 md; //motors (-400 to 400)
+Sabertooth ST(128);
 
 bool i2cFaultDetected = false; // Flag to track I2C faults
 
@@ -38,9 +38,9 @@ MPUSensorValues past_tilt;
 MotorValues mvals;
 
 
-void setup() {
+void setup(){
 
-  Serial.begin(115200);
+  Serial.begin(9600);
   delay(1000);
 
   if(MPUSetup(mpu)){
@@ -58,13 +58,14 @@ void setup() {
   
   delay(1000);
   strain = nau.read(); //read in initial strain after 1 second (first second gives random values)
-  
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
   initial_tilt.accelZ = a.acceleration.z;
   initial_tilt.accelX = a.acceleration.x;
 
-  MotorSetup(md);
+  //MotorSetup();
+  SabertoothTXPinSerial.begin(9600); // 9600 is the default baud rate for Sabertooth packet serial.
+  ST.autobaud(); // Send the autobaud command to the Sabertooth controller(s).
 
   // Initialize I2C devices
   Wire.beginTransmission(0x2A);
@@ -78,8 +79,7 @@ void setup() {
   }
   mvals.M1Speed = 0;
   mvals.M2Speed = 0;
-
-  
+  Serial.println("Completed Setup");
 }
 
 
@@ -92,7 +92,7 @@ void loop() {
   while (Serial.available() > 0) {
       keeprun = Serial.parseInt();
   }
-  StopIfFault(md, keeprun);
+  StopIfFault(keeprun);
   bool smacked = false;
   if( abs( abs(MPUValues.accelZ) - abs(initial_tilt.accelZ)) > 4){
     for(int i=0; i<5; i++){
@@ -115,14 +115,13 @@ void loop() {
     smacked = true;
   }
 
-  if(!smacked){
-    //mvals = MotorMove(md, MPUValues.accelY, NAUValuesAdjusted, mvals);
+  //if(!smacked){
+    mvals = MotorMove(MPUValues.accelY, NAUValuesAdjusted, mvals);
     past_tilt = MPUValues;
-  }
+  //}
   
-  //MotorSetLevel(md, MPUValues.accelY);
-  md.setM1Speed(-200);
-  md.setM2Speed(-200);
+  //MotorSetLevel(MPUValues.accelY);
+
 
   // Check for I2C errors for both devices
   Wire.beginTransmission(SSD1306_ADDRESS);
@@ -143,13 +142,14 @@ void loop() {
   if (i2cFaultDetected) {
     Serial.println(F("I2C fault detected!"));
   }
-
+  /*
   if(md.getM1CurrentMilliamps() > 8000){
     Serial.println("M1 Current over 8A");
   }
   if(md.getM2CurrentMilliamps() > 8000){
     Serial.println("M2 Current over 8A");
   }
+  */
 
   delay(5);
 
