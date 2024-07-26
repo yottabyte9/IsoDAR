@@ -115,10 +115,10 @@ void loop() {
     smacked = true;
   }
 
-  //if(!smacked){
+  if(!smacked){
     mvals = MotorMove(MPUValues.accelY, NAUValuesAdjusted, mvals);
     past_tilt = MPUValues;
-  //}
+  }
   
   //MotorSetLevel(MPUValues.accelY);
 
