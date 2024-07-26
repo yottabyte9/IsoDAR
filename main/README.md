@@ -6,4 +6,6 @@ MPU6050 library - https://github.com/adafruit/Adafruit_MPU6050/blob/master/Adafr
 
 DualG2HighPowerMotorShield library - https://github.com/pololu/dual-g2-high-power-motor-shield/blob/master/DualG2HighPowerMotorShield.cpp
 
+Sabertooth libraries - https://www.dimensionengineering.com/info/arduino (download locally) 
+
 https://docs.google.com/spreadsheets/d/1iXG_-U036u3jl0MuzTEPDbzxgZP-VuRlwGiqfNZMB4Q/edit?gid=0#gid=0
