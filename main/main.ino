@@ -30,7 +30,7 @@ struct MPUSensorValues { //struct for tilt sensor (6 values)
 };
 
 double strain; //initial strain
-int keeprun = 1;
+int mode = 1;
 MPUSensorValues initial_tilt;
 MPUSensorValues past_tilt;
 
@@ -85,42 +85,65 @@ void setup(){
 
 
 void loop() {
-  MPUSensorValues MPUValues = MPUReadValues(mpu);
-  MPUPrintValues(MPUValues);
-  double NAUValues = NAUSensorValueBase(nau);
-  double NAUValuesAdjusted = NAUPrintValuesAdjusted(NAUValues, strain);
+  MPUSensorValues MPUValues = MPUReadValues(mpu);   // read new 6-axis values
+  MPUPrintValues(MPUValues);                        // print those values on serial monitor
+  double NAUValues = NAUSensorValueBase(nau);       // read new strain gauge values
+  double NAUValuesAdjusted = NAUPrintValuesAdjusted(NAUValues, strain); // print those values on serial monitor
   while (Serial.available() > 0) {
-      keeprun = Serial.parseInt();
+      mode = Serial.parseInt();
   }
-  StopIfFault(keeprun);
-  bool smacked = false;
-  if( abs( abs(MPUValues.accelZ) - abs(initial_tilt.accelZ)) > 4){
-    for(int i=0; i<5; i++){
-      Serial.println("YOU SMACKED IT");
+  StopIfFault(mode);
+  if(mode == 1){
+    Serial.println("Do motor set level function \n \n");
+    MotorSetLevel(MPUValues.accelY);
+    Serial.println("completed motor set level function \n \n");
+  }
+  else if(mode == 2){
+    bool smacked = false;
+    if( abs( abs(MPUValues.accelZ) - abs(initial_tilt.accelZ)) > 4){
+      for(int i=0; i<5; i++){
+        Serial.println("YOU SMACKED IT");
+      }
+      smacked = true;
     }
-    smacked = true;
+
+    if( abs( abs(MPUValues.accelX) - abs(initial_tilt.accelX)) > 4){
+      for(int i=0; i<5; i++){
+        Serial.println("YOU SMACKED IT");
+      }
+      smacked = true;
+    }
+
+    if( abs( abs(MPUValues.accelY) - abs(past_tilt.accelY)) > 0.5){
+      for(int i=0; i<20; i++){
+        Serial.println("Do motor set level function");
+        MotorSetLevel(MPUValues.accelY);
+        Serial.println("completed motor set level function");
+      }
+      smacked = true;
+    }
+
+    if(!smacked){
+      mvals = MotorMove(MPUValues.accelY, NAUValuesAdjusted, mvals);
+      past_tilt = MPUValues;
+    }
+  }
+  else if(mode == 3){
+    mvals.M1Speed = 50;
+    mvals.M2Speed = 50;
+    ST.motor(1, mvals.M1Speed);
+    ST.motor(2, mvals.M2Speed);
+  }
+  else if(mode == 4){
+    mvals.M1Speed = -50;
+    mvals.M2Speed = -50;
+    ST.motor(1, mvals.M1Speed);
+    ST.motor(2, mvals.M2Speed);
   }
 
-  if( abs( abs(MPUValues.accelX) - abs(initial_tilt.accelX)) > 4){
-    for(int i=0; i<5; i++){
-      Serial.println("YOU SMACKED IT");
-    }
-    smacked = true;
-  }
+  // SELF LEVELING FUNCTION - STAND ALONE VERSION
 
-  if( abs( abs(MPUValues.accelY) - abs(past_tilt.accelY)) > 0.5){
-    for(int i=0; i<5; i++){
-      Serial.println("YOU SMACKED IT");
-    }
-    smacked = true;
-  }
 
-  if(!smacked){
-    mvals = MotorMove(MPUValues.accelY, NAUValuesAdjusted, mvals);
-    past_tilt = MPUValues;
-  }
-  
-  //MotorSetLevel(MPUValues.accelY);
 
 
   // Check for I2C errors for both devices
@@ -151,6 +174,6 @@ void loop() {
   }
   */
 
-  delay(5);
+  delay(500);
 
 }
