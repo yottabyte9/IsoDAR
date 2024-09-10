@@ -5,19 +5,38 @@ void MotorSetup(){
 
 void MotorSetLevel(double ytilt){
   double tolerance = 0.1;
-  double max_tilt = 2.6; //error catching
-  double speed = 25;
-  if(abs(ytilt) < tolerance){
+  double max_tilt = 5; //error catching
+  double speed = 20;  //slows motor operations to allow more precise checking?
+  
+  ST.stop();        // Check yo'self before it becomes wrecked.
+  delay(500);      // Wait for things to settle and allow humans to read the 6-axis values
+  /*
+  Serial.println("Ytilt \t \ttolerance \tmax_tilt");        // Report values for debugging
+  Serial.print(abs(ytilt));
+  Serial.print("\t \t");
+  Serial.print(tolerance);
+  Serial.print("\t \t");
+  Serial.println(max_tilt);
+ */
+
+  if(abs(ytilt) < tolerance){                                   // If the tilt is acceptably small, return
+    Serial.println("[----------          ----------] Y within tolerance : NO MOVE\n");          // report action for debug                                  
     return;
   }
-  if( abs(ytilt) > tolerance && abs(ytilt) < max_tilt){
+  if( abs(ytilt) > tolerance && abs(ytilt) < max_tilt){         // If tilted clockwise, extend M1 and retract M2
     if(ytilt > 0){
-      ST.motor(1, speed);
+      //Serial.print("Y too big : Y tilt = \t");                // report action for debug
+     Serial.println("[vvvvvvvvvv          ^^^^^^^^^^] Y too big\n");
+      ST.motor(1, 1*speed);
       ST.motor(2, -1*speed);
     }
     else{
+      //Serial.println("Y < 0, move M1- and M2+");              // if tilted, and not clockwise, retract M1 and extend M2
+//      Serial.print("Y too small: Y tilt = \t");                // report action for debug
+     Serial.println("[^^^^^^^^^^          vvvvvvvvvv] Y too small\n");
+      Serial.println(ytilt);
       ST.motor(1, -1*speed);
-      ST.motor(2, speed);
+      ST.motor(2, 1*speed);
     }
   }
 }
@@ -31,7 +50,7 @@ MotorValues MotorMove(double ytilt, double strain, MotorValues mvals){
   if (abs(ytilt) > max_tilt) {
     Serial.println("over max tilt terminate all motors");
     ST.stop();
-    delay(1000);
+    delay(500);
     //while (1);
   }
 
