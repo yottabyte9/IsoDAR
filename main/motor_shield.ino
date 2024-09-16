@@ -63,18 +63,8 @@ MotorValues MotorMove(double ytilt, double strain, MotorValues mvals){
       Serial.println("CASE 1");
       double M1target = (1+fraction)*nstrain;
       double M2target = fraction*nstrain;
-      if(M1target > mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed+5;
-      }
-      if(M1target < mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed-5;
-      }
-      if(M2target > mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed+5;
-      }
-      if(M2target < mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed-5;
-      }
+      newvals.M1Speed = round(M1target);
+      newvals.M2Speed = round(M2target);
       ST.motor(1, newvals.M1Speed);
       ST.motor(2, newvals.M2Speed);
       Serial.print("M1 Speed: ");
@@ -87,18 +77,8 @@ MotorValues MotorMove(double ytilt, double strain, MotorValues mvals){
       Serial.println("CASE 2");
       double M1target = fraction*nstrain;
       double M2target = (1+fraction)*nstrain;
-      if(M1target > mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed+5;
-      }
-      if(M1target < mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed-5;
-      }
-      if(M2target > mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed+5;
-      }
-      if(M2target < mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed-5;
-      }
+      newvals.M1Speed = round(M1target);
+      newvals.M2Speed = round(M2target);
       ST.motor(1, newvals.M1Speed);
       ST.motor(2, newvals.M2Speed);
       Serial.print("M1 Speed: ");
@@ -113,18 +93,8 @@ MotorValues MotorMove(double ytilt, double strain, MotorValues mvals){
       Serial.println("CASE 3");
       double M1target = fraction*nstrain;
       double M2target = (1+fraction)*nstrain;
-      if(M1target > mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed+5;
-      }
-      if(M1target < mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed-5;
-      }
-      if(M2target > mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed+5;
-      }
-      if(M2target < mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed-5;
-      }
+      newvals.M1Speed = round(M1target);
+      newvals.M2Speed = round(M2target);
       ST.motor(1, newvals.M1Speed);
       ST.motor(2, newvals.M2Speed);
       Serial.print("M1 Speed: ");
@@ -137,18 +107,8 @@ MotorValues MotorMove(double ytilt, double strain, MotorValues mvals){
       Serial.println("CASE 4");
       double M1target = (1+fraction)*nstrain;
       double M2target = fraction*nstrain;
-      if(M1target > mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed+5;
-      }
-      if(M1target < mvals.M1Speed){
-        newvals.M1Speed = mvals.M1Speed-5;
-      }
-      if(M2target > mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed+5;
-      }
-      if(M2target < mvals.M2Speed){
-        newvals.M2Speed = mvals.M2Speed-5;
-      }
+      newvals.M1Speed = round(M1target);
+      newvals.M2Speed = round(M2target);
       ST.motor(1, newvals.M1Speed);
       ST.motor(2, newvals.M2Speed);
       Serial.print("M1 Speed: ");
@@ -162,18 +122,8 @@ MotorValues MotorMove(double ytilt, double strain, MotorValues mvals){
   //no tilt
   double M1target = nstrain;
   double M2target = nstrain;
-  if(M1target > mvals.M1Speed){
-    newvals.M1Speed = mvals.M1Speed+5;
-  }
-  if(M1target < mvals.M1Speed){
-    newvals.M1Speed = mvals.M1Speed-5;
-  }
-  if(M2target > mvals.M2Speed){
-    newvals.M2Speed = mvals.M2Speed+5;
-  }
-  if(M2target < mvals.M2Speed){
-    newvals.M2Speed = mvals.M2Speed-5;
-  }
+  newvals.M1Speed = round(M1target);
+  newvals.M2Speed = round(M2target);
   ST.motor(1, newvals.M1Speed);
   ST.motor(2, newvals.M2Speed);
   Serial.print("M1 Speed: ");
@@ -194,16 +144,16 @@ double MotorStrainCalculate(double strain) {
   double target_pressure = -20000;
   double tolerance = 7500;
 
-  if (strain <= max_threshold) {
-    return 127;
+  if (strain <= max_threshold) { //max is 127
+    return 50;
   }
   else if (strain >= min_threshold) {
-    return -127;
+    return -50;
   }
   else if (strain > max_threshold && strain < target_pressure - tolerance) { // (-200k to -125k)
     double range = abs(max_threshold - (target_pressure - tolerance)); //75k range
     double fraction = abs(strain - (target_pressure - tolerance)) / range; //distance from -125k / range
-    return 127 * fraction;
+    return (50 * fraction);
   }
   else if (strain >= target_pressure - tolerance && strain <= target_pressure + tolerance) {
     return 0;
@@ -211,7 +161,7 @@ double MotorStrainCalculate(double strain) {
   else if (strain > target_pressure + tolerance && strain < min_threshold) { // (-75k to 0)
     double range = abs(min_threshold - (target_pressure + tolerance)); // 75k range
     double fraction = abs(strain - (target_pressure + tolerance)) / range; // distance from -75k / range
-    return -127 * fraction;
+    return (-50 * fraction);
   }
   return 0;
 }
