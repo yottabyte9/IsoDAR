@@ -9,3 +9,9 @@ DualG2HighPowerMotorShield library - https://github.com/pololu/dual-g2-high-powe
 Sabertooth libraries - https://www.dimensionengineering.com/info/arduino (download locally) 
 
 https://docs.google.com/spreadsheets/d/1iXG_-U036u3jl0MuzTEPDbzxgZP-VuRlwGiqfNZMB4Q/edit?gid=0#gid=0
+
+
+https://learn.adafruit.com/adafruit-nau7802-24-bit-adc-stemma-qt-qwiic?view=all
+https://learn.adafruit.com/adafruit-nau7802-24-bit-adc-stemma-qt-qwiic/downloads
+https://cdn-learn.adafruit.com/assets/assets/000/111/947/original/NAU7802_Data_Sheet_V1.7.pdf?1653414853
+https://cdn-shop.adafruit.com/product-files/4543/4543_diagram.jpg
