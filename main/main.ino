@@ -96,6 +96,8 @@ void loop() {
       Serial.print("Parsed mode: ");
       Serial.println(mode);                        // Display parsed mode
   }
+  Serial.print("Tilt: ");
+  Serial.println(MPUValues.accelY);
   
   if(mode == 0){
     ST.stop();
@@ -109,20 +111,83 @@ void loop() {
     Serial.println("completed motor set level function \n \n");
   }
   else if(mode == 2){
-    mvals = MotorMove(MPUValues.accelY, NAUValuesAdjusted, mvals);
+    bool smacked = false;
+    if( abs( abs(MPUValues.accelZ) - abs(initial_tilt.accelZ)) > 4){
+      for(int i=0; i<5; i++){
+        Serial.println("YOU SMACKED IT");
+      }
+      smacked = true;
+    }
+  
+    if( abs( abs(MPUValues.accelX) - abs(initial_tilt.accelX)) > 4){
+      for(int i=0; i<5; i++){
+        Serial.println("YOU SMACKED IT");
+      }
+      smacked = true;
+    }
+  
+    if( abs( abs(MPUValues.accelY) - abs(past_tilt.accelY)) > 0.5){
+      for(int i=0; i<5; i++){
+        Serial.println("YOU SMACKED IT");
+      }
+      smacked = true;
+    }
+  
+    if(!smacked){
+      mvals = MotorMove(MPUValues.accelY, NAUValuesAdjusted, mvals);
+      past_tilt = MPUValues;
+    }
   }
   else if(mode == 3){
-    mvals.M1Speed = 0;
-    mvals.M2Speed = 0;
-    ST.motor(1, mvals.M1Speed);
-    ST.motor(2, mvals.M2Speed);
+    ST.motor(1, 50);
+    ST.motor(2, 50);
+    Serial.println("Junk");
+    Serial.println("M1 Speed: 50");
+    delay(10);
+    Serial.println("M2 Speed: 50");
+    delay(1000);
+    ST.motor(1, 0);
+    ST.motor(2, 0);
+    Serial.println("Junk");
+    Serial.println("M1 Speed: 0");
+    delay(10);
+    Serial.println("M2 Speed: 0");
+    MotorSetLevel(MPUValues.accelY);
+    MotorSetLevel(MPUValues.accelY);
+    MotorSetLevel(MPUValues.accelY);
+    delay(1000);
   }
   else if(mode == 4){
-    mvals.M1Speed = 50;
-    mvals.M2Speed = -50;
-    ST.motor(1, mvals.M1Speed);
-    ST.motor(2, mvals.M2Speed);
+    ST.motor(1, 50);
+    Serial.println("Junk");
+    Serial.println("M1 Speed: 50");
   }
+  else if(mode == 5){
+    ST.motor(1, 0);
+    Serial.println("Junk");
+    Serial.println("M1 Speed: 0");
+  }
+  else if(mode == 6){
+    ST.motor(1, -50);
+    Serial.println("Junk");
+    Serial.println("M1 Speed: -50");
+  }
+  else if(mode == 7){
+    ST.motor(2, 50);
+    Serial.println("Junk");
+    Serial.println("M2 Speed: 50");
+  }
+  else if(mode == 8){
+    ST.motor(2, 0);
+    Serial.println("Junk");
+    Serial.println("M2 Speed: 0");
+  }
+  else if(mode == 9){
+    ST.motor(2, -50);
+    Serial.println("Junk");
+    Serial.println("M2 Speed: -50");
+  }
+ 
 
 
   // Check for I2C errors for both devices
@@ -132,6 +197,9 @@ void loop() {
     i2cFaultDetected = true;
     Serial.print(F("I2C error with SSD1306: "));
     Serial.println(error1);
+    ST.motor(1, 0);
+    ST.motor(2, 0);
+    mode == 8;
   }
 
   Wire.beginTransmission(MPU6050_ADDRESS);
@@ -140,12 +208,17 @@ void loop() {
     i2cFaultDetected = true;
     Serial.print(F("I2C error with MPU6050: "));
     Serial.println(error2);
+    ST.motor(1, 0);
+    ST.motor(2, 0);
+    mode == 8;
+    
   }
   if (i2cFaultDetected) {
     Serial.println(F("I2C fault detected!"));
+    ST.motor(1, 0);
+    ST.motor(2, 0);
+    mode == 8;
   }
-
-
-  delay(5);
-
+  
+  delay(10);
 }
