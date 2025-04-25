@@ -96,6 +96,7 @@ void loop() {
       Serial.print("Parsed mode: ");
       Serial.println(mode);                        // Display parsed mode
   }
+  MPUValues.accelY *= -1;
   Serial.print("Tilt: ");
   Serial.println(MPUValues.accelY);
   
