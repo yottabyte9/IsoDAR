@@ -5,6 +5,7 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH110X.h>
+#include <SoftwareSerial.h>
 
 // Define I2C addresses
 #define SSD1306_ADDRESS 0x2A
@@ -13,7 +14,8 @@
 
 Adafruit_MPU6050 mpu; //6 direction tilt sensor
 Adafruit_NAU7802 nau; //strain sensor, negative values = resistance
-Sabertooth ST(128);
+SoftwareSerial STSerial(9, 10);
+Sabertooth ST(128, STSerial);
 
 bool i2cFaultDetected = false; // Flag to track I2C faults
 
@@ -30,7 +32,7 @@ struct MPUSensorValues { //struct for tilt sensor (6 values)
 };
 
 double strain; //initial strain
-int mode = 1;
+int mode = 5;
 MPUSensorValues initial_tilt;
 MPUSensorValues past_tilt;
 
@@ -64,7 +66,7 @@ void setup(){
   initial_tilt.accelX = a.acceleration.x;
 
   //MotorSetup();
-  SabertoothTXPinSerial.begin(9600); // 9600 is the default baud rate for Sabertooth packet serial.
+  STSerial.begin(9600);
   ST.autobaud(); // Send the autobaud command to the Sabertooth controller(s).
 
   // Initialize I2C devices
@@ -142,14 +144,12 @@ void loop() {
   else if(mode == 3){
     ST.motor(1, 50);
     ST.motor(2, 50);
-    Serial.println("Junk");
     Serial.println("M1 Speed: 50");
     delay(10);
     Serial.println("M2 Speed: 50");
     delay(1000);
     ST.motor(1, 0);
     ST.motor(2, 0);
-    Serial.println("Junk");
     Serial.println("M1 Speed: 0");
     delay(10);
     Serial.println("M2 Speed: 0");
@@ -160,35 +160,47 @@ void loop() {
   }
   else if(mode == 4){
     ST.motor(1, 50);
-    Serial.println("Junk");
     Serial.println("M1 Speed: 50");
   }
   else if(mode == 5){
     ST.motor(1, 0);
-    Serial.println("Junk");
     Serial.println("M1 Speed: 0");
   }
   else if(mode == 6){
     ST.motor(1, -50);
-    Serial.println("Junk");
     Serial.println("M1 Speed: -50");
   }
   else if(mode == 7){
     ST.motor(2, 50);
-    Serial.println("Junk");
     Serial.println("M2 Speed: 50");
   }
   else if(mode == 8){
     ST.motor(2, 0);
-    Serial.println("Junk");
     Serial.println("M2 Speed: 0");
   }
   else if(mode == 9){
     ST.motor(2, -50);
-    Serial.println("Junk");
     Serial.println("M2 Speed: -50");
   }
- 
+  /*
+  else if(mode == 10){
+    ST.motor(1, 50);
+    Serial.println("M1 Speed: 50");
+    ST.motor(2, 50);
+    Serial.println("M2 Speed: 50");
+  }
+  else if(mode == 11){
+    ST.motor(1, 0);
+    Serial.println("M1 Speed: 0");
+    ST.motor(2, 0);
+    Serial.println("M2 Speed: 0");
+  }
+  else if(mode == 12){
+    ST.motor(1, -50);
+    Serial.println("M1 Speed: -50");
+    ST.motor(2, -50);
+    Serial.println("M2 Speed: -50");
+  }*/
 
 
   // Check for I2C errors for both devices
@@ -200,7 +212,7 @@ void loop() {
     Serial.println(error1);
     ST.motor(1, 0);
     ST.motor(2, 0);
-    mode == 8;
+    mode = 5;
   }
 
   Wire.beginTransmission(MPU6050_ADDRESS);
@@ -211,14 +223,14 @@ void loop() {
     Serial.println(error2);
     ST.motor(1, 0);
     ST.motor(2, 0);
-    mode == 8;
+    mode = 5;
     
   }
   if (i2cFaultDetected) {
     Serial.println(F("I2C fault detected!"));
     ST.motor(1, 0);
     ST.motor(2, 0);
-    mode == 8;
+    mode = 5;
   }
   
   delay(10);
