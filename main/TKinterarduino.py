@@ -1,155 +1,280 @@
 import tkinter as tk
+from tkinter import messagebox
 from PIL import Image, ImageTk
 import serial
+import serial.tools.list_ports
 import threading
 import time
+import sys
+import os
+import queue
 
-arduino = serial.Serial('COM7', 9600, timeout=1)
-time.sleep(2)
+# ---------- Helpers ----------
+def resource_path(relative_path):
+    candidates = []
+    try:
+        candidates.append(os.path.join(sys._MEIPASS, relative_path))
+    except Exception:
+        pass
+    try:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        candidates.append(os.path.join(script_dir, relative_path))
+    except Exception:
+        pass
+    candidates.append(os.path.join(os.getcwd(), relative_path))
+    candidates.append(os.path.normpath(r"C:\Users\andre\Desktop\Arduino\pythongui\SciPhyUmichBkg.jpg"))
+    candidates.append(relative_path)
+    for p in candidates:
+        if os.path.exists(p):
+            return p
+    return candidates[-1]
 
-def set_mode(mode):
-    def write_serial():
-        try:
-            arduino.write(f"{mode}\n".encode())  
-            print(f"Mode {mode} sent to Arduino.")
-        except Exception as e:
-            print(f"Error: {e}")
+def list_serial_ports():
+    return [p.device for p in serial.tools.list_ports.comports()]
 
-    threading.Thread(target=write_serial).start() 
+# ---------- Globals ----------
+arduino = None
+serial_q = queue.Queue()    # incoming lines from Arduino -> GUI
+command_q = queue.Queue()   # outgoing commands from GUI -> writer thread
+stop_event = threading.Event()
+write_lock = threading.Lock()
+bg_image = None             
+force_shutdown = False
 
-    if mode == 0:
-        root.config(bg='red')  
-        bg_label.place_forget() 
-        current_mode.set("Force Shutdown")
-    elif mode in [4, 5, 6, 7, 8, 9]:
-        current_mode.set("Manual Mode")
-    else:
-        current_mode.set(mode_labels[mode])
-
-serial_data = []
-
-def read_serial():
-    while True:
-        try:
-            if arduino.in_waiting > 0:
-                line = arduino.readline().decode('utf-8').strip()  
-                if line:
-                    serial_data.append(line)
-                    print(f"Line received: {line}")  
-        except Exception as e:
-            print(f"Error reading from serial: {e}")
-
-def update_gui():
-    if serial_data:
-        line = serial_data.pop(0)  
-        data_label.config(text=line) 
-        
-        if "M1 Speed: " in line:
-            m1_speed_value = line[len("M1 Speed: "):]
-            m1_speed.set(m1_speed_value)
-
-        elif "M2 Speed: " in line:
-            m2_speed_value = line[len("M2 Speed: "):]
-            m2_speed.set(m2_speed_value)
-
-        elif "Strain: " in line:
-            strain_value = line[len("Strain: "):]
-            strain.set(strain_value)
-        elif "Tilt: " in line:
-            tilt_value = line[len("Tilt: "):]
-            tilt.set(tilt_value)
-    
-    root.after(10, update_gui)  
-
-serial_thread = threading.Thread(target=read_serial, daemon=True)
-serial_thread.start()
-
+# ---------- GUI setup ----------
 root = tk.Tk()
 root.title("Arduino Mode Control")
-root.geometry("1920x1080")
+root.geometry("1280x800")
 
-image = Image.open("SciPhyUmichBkg.jpg")
-bg_image = ImageTk.PhotoImage(image)
-bg_label = tk.Label(root, image=bg_image)
-bg_label.place(x=0, y=0, relwidth=1, relheight=1)  
+# load background image if available
+bg_label = tk.Label(root)
+try:
+    img_path = resource_path("SciPhyUmichBkg.jpg")
+    if os.path.exists(img_path):
+        img = Image.open(img_path)
+        bg_image = ImageTk.PhotoImage(img)
+        bg_label = tk.Label(root, image=bg_image)
+        bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+    else:
+        print(f"Background not found (tried): {img_path}")
+except Exception as e:
+    print(f"Error loading background image: {e}")
 
 mode_labels = [
-    "Force Shutdown", "Leveling Mode", "Follow Mode", "Lift Mode", 
-    "M1 up", "M1 stop", "M1 down", "M2 up", 
+    "Force Shutdown", "Leveling Mode", "Follow Mode", "Lift Mode",
+    "M1 up", "M1 stop", "M1 down", "M2 up",
     "M2 stop", "M2 down"
 ]
 
-current_mode = tk.StringVar()
-current_mode.set("Leveling Mode")
+current_mode = tk.StringVar(value=mode_labels[1])  # show leveling mode by default
+m1_speed = tk.StringVar(value="0")
+m2_speed = tk.StringVar(value="0")
+strain = tk.StringVar(value="0")
+tilt = tk.StringVar(value="0")
 
-large_font = ('Arial', 20)
-button_width = 20
-button_height = 3
+large_font = ('Arial', 16)
+button_w, button_h = 18, 2
 
-data_label = tk.Label(root, text="Waiting for data...", width=50, height=2, font=large_font, bg='#f0f0f0')
-data_label.pack(pady=10)
+data_label = tk.Label(root, text="Waiting for data...", font=large_font, bg='#f0f0f0', width=50, height=2)
+data_label.pack(pady=8)
 mode_label = tk.Label(root, textvariable=current_mode, font=large_font, bg='#f0f0f0')
-mode_label.pack(pady=10)  
+mode_label.pack(pady=6)
 
+available_ports = list_serial_ports()
+selected_port = tk.StringVar(value=available_ports[0] if available_ports else "")
+port_menu = tk.OptionMenu(root, selected_port, *available_ports) if available_ports else tk.Label(root, text="No COM ports")
+port_menu.pack(pady=6)
 
-left_frame = tk.Frame(root)
-left_frame.place(x=20, y=150)  
+# ---------- Serial threads ----------
+def serial_writer():
+    """Dedicated writer: drain command_q and write to serial with lock."""
+    while not stop_event.is_set():
+        try:
+            cmd = command_q.get(timeout=0.1)
+        except queue.Empty:
+            continue
+        try:
+            if arduino and arduino.is_open:
+                with write_lock:
+                    arduino.write(f"{cmd}\n".encode('utf-8'))
+                    arduino.flush()
+            # small delay
+                time.sleep(0.01)
+        except Exception as e:
+            print(f"Writer error: {e}")
+        finally:
+            try:
+                command_q.task_done()
+            except Exception:
+                pass
+
+def serial_reader():
+    """Read lines from serial and put them into serial_q."""
+    while not stop_event.is_set():
+        try:
+            if arduino and arduino.in_waiting > 0:
+                line = arduino.readline().decode('utf-8', errors='ignore').strip()
+                if line:
+                    serial_q.put(line)
+        except Exception as e:
+            print(f"Reader error: {e}")
+        time.sleep(0.01)
+
+def start_serial_threads():
+    stop_event.clear()
+    t_read = threading.Thread(target=serial_reader, daemon=True)
+    t_write = threading.Thread(target=serial_writer, daemon=True)
+    t_read.start()
+    t_write.start()
+
+# ---------- Command API (non-blocking) ----------
+def send_command(mode_int):
+    """Queue a command (int or str) for the writer thread."""
+    command_q.put(str(int(mode_int)))  # ensure integer string
+
+# ---------- GUI actions ----------
+def set_mode(mode):
+    """Update visuals and queue mode command. Non-blocking."""
+    global force_shutdown
+    send_command(mode)
+    if mode == 0:
+        force_shutdown = True
+        try:
+            bg_label.place_forget()
+        except Exception:
+            pass
+        root.config(bg='red')
+        current_mode.set(mode_labels[0])
+    else:
+        force_shutdown = False
+        try:
+            if bg_image:
+                bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+        except Exception:
+            pass
+        root.config(bg='#f0f0f0')
+        current_mode.set(mode_labels[mode] if mode < len(mode_labels) else f"Mode {mode}")
+
+def connect_to_arduino():
+    global arduino
+    port = selected_port.get()
+    if not port:
+        messagebox.showerror("Error", "No COM port selected")
+        return
+    try:
+        arduino = serial.Serial(port, 9600, timeout=1)
+        time.sleep(2)  # allow Arduino reset
+    except Exception as e:
+        messagebox.showerror("Connection Error", f"Failed to open {port}: {e}")
+        return
+    start_serial_threads()
+    messagebox.showinfo("Connected", f"Connected to {port}")
+    # send leveling mode as the first real command on connect
+    send_command(1)
+    current_mode.set(mode_labels[1])
+
+# ---------- GUI update loop ----------
+def update_gui():
+    # consume serial messages and update UI
+    updated = False
+    while True:
+        try:
+            line = serial_q.get_nowait()
+        except queue.Empty:
+            break
+        updated = True
+        data_label.config(text=line)
+        # optional parsing: Arduino snippet prints "Parsed mode: <n>"
+        if line.startswith("Parsed mode:"):
+            try:
+                n = int(line.split("Parsed mode:")[-1].strip())
+                # reflect Arduino-acknowledged mode in UI
+                if n == 0:
+                    current_mode.set(mode_labels[0])
+                elif 0 <= n < len(mode_labels):
+                    current_mode.set(mode_labels[n])
+                else:
+                    current_mode.set(f"Mode {n}")
+            except Exception:
+                pass
+        # parse sensor-like lines if present
+        if "M1 Speed:" in line:
+            try:
+                m1_speed.set(line.split("M1 Speed:", 1)[1].strip())
+            except Exception:
+                pass
+        if "M2 Speed:" in line:
+            try:
+                m2_speed.set(line.split("M2 Speed:", 1)[1].strip())
+            except Exception:
+                pass
+        if "Strain:" in line:
+            try:
+                strain.set(line.split("Strain:", 1)[1].strip())
+            except Exception:
+                pass
+        if "Tilt:" in line:
+            try:
+                tilt.set(line.split("Tilt:", 1)[1].strip())
+            except Exception:
+                pass
+
+    # schedule next update
+    root.after(50, update_gui)
+
+# ---------- UI widgets ----------
+connect_btn = tk.Button(root, text="Connect", command=connect_to_arduino, width=12, height=1, font=large_font)
+connect_btn.pack(pady=6)
+
+btn_frame_left = tk.Frame(root)
+btn_frame_left.place(x=20, y=150)
+btn_frame_right = tk.Frame(root)
+# move manual controls further to the right on a 1280-wide window
+# previous x=650; set x=980 (adjust if your monitor/window size differs)
+btn_frame_right.place(x=980, y=150)
 
 for mode in range(4):
-    button = tk.Button(left_frame, text=mode_labels[mode], width=button_width, height=button_height, font=large_font, command=lambda m=mode: set_mode(m))
-    button.pack(pady=10)
+    b = tk.Button(btn_frame_left, text=mode_labels[mode], width=button_w, height=button_h, font=large_font,
+                  command=lambda m=mode: set_mode(m))
+    b.pack(pady=6)
 
-right_frame = tk.Frame(root)
-right_frame.place(x=1000, y=150)  
+manual_modes = list(range(4, 10))
+for i, mode in enumerate(manual_modes):
+    r = i % 3
+    c = i // 3
+    b = tk.Button(btn_frame_right, text=mode_labels[mode], width=12, height=2, font=large_font,
+                  command=lambda m=mode: set_mode(m))
+    b.grid(row=r, column=c, padx=8, pady=8)
 
-m1_up_button = tk.Button(right_frame, text=mode_labels[4], width=10, height=2, font=large_font, command=lambda: set_mode(4))
-m1_up_button.grid(row=0, column=0, padx=10, pady=10)
+# sensor displays
+labels_info = [
+    ("Tilt:", tilt, 20, 520),
+    ("Pressure:", strain, 20, 560),
+    ("M1 Speed:", m1_speed, 20, 600),
+    ("M2 Speed:", m2_speed, 20, 640),
+]
+for text, var, x, y in labels_info:
+    lbl = tk.Label(root, text=text, font=large_font, bg='#f0f0f0')
+    lbl.place(x=x, y=y)
+    ent = tk.Entry(root, textvariable=var, font=large_font, width=12, justify='left')
+    ent.place(x=x+140, y=y)
+    ent.config(state='readonly')
 
-m1_0_button = tk.Button(right_frame, text=mode_labels[5], width=10, height=2, font=large_font, command=lambda: set_mode(5))
-m1_0_button.grid(row=1, column=0, padx=10, pady=10)
+# ---------- Clean shutdown ----------
+def on_closing():
+    stop_event.set()
+    # give threads a moment to exit and flush commands
+    time.sleep(0.05)
+    try:
+        if arduino and arduino.is_open:
+            arduino.close()
+    except Exception:
+        pass
+    root.destroy()
 
-m1_down_button = tk.Button(right_frame, text=mode_labels[6], width=10, height=2, font=large_font, command=lambda: set_mode(6))
-m1_down_button.grid(row=2, column=0, padx=10, pady=10)
+root.protocol("WM_DELETE_WINDOW", on_closing)
 
-m2_up_button = tk.Button(right_frame, text=mode_labels[7], width=10, height=2, font=large_font, command=lambda: set_mode(7))
-m2_up_button.grid(row=0, column=1, padx=10, pady=10)
-
-m2_0_button = tk.Button(right_frame, text=mode_labels[8], width=10, height=2, font=large_font, command=lambda: set_mode(8))
-m2_0_button.grid(row=1, column=1, padx=10, pady=10)
-
-m2_down_button = tk.Button(right_frame, text=mode_labels[9], width=10, height=2, font=large_font, command=lambda: set_mode(9))
-m2_down_button.grid(row=2, column=1, padx=10, pady=10)
-
-m1_speed = tk.StringVar()
-m1_speed.set("0")  
-m2_speed = tk.StringVar()
-m2_speed.set("0") 
-strain = tk.StringVar()
-strain.set("0") 
-tilt = tk.StringVar()
-tilt.set("0") 
-
-tilt_label = tk.Label(root, text="Tilt:", font=large_font)
-tilt_label.place(x=500, y=500)
-tilt_entry = tk.Entry(root, textvariable=tilt, font=large_font, width=15)
-tilt_entry.place(x=700, y=500)
-
-strain_label = tk.Label(root, text="Pressure:", font=large_font)
-strain_label.place(x=500, y=550)
-strain_entry = tk.Entry(root, textvariable=strain, font=large_font, width=15)
-strain_entry.place(x=700, y=550)
-
-m1_speed_label = tk.Label(root, text="M1 Speed:", font=large_font)
-m1_speed_label.place(x=500, y=600)
-m1_speed_entry = tk.Entry(root, textvariable=m1_speed, font=large_font, width=15)
-m1_speed_entry.place(x=700, y=600)
-
-m2_speed_label = tk.Label(root, text="M2 Speed:", font=large_font)
-m2_speed_label.place(x=500, y=650)
-m2_speed_entry = tk.Entry(root, textvariable=m2_speed, font=large_font, width=15)
-m2_speed_entry.place(x=700, y=650)
-
-root.after(10, update_gui)
+# start UI loop and initial visual state
+current_mode.set(mode_labels[1])
+root.after(50, update_gui)
 root.mainloop()
-
-arduino.close()
